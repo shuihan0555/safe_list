@@ -4,15 +4,14 @@
 	> Mail: xiao13149920@foxmail.com 
 	> Created Time: Wed 08 Feb 2017 07:14:21 PM CST
  ************************************************************************/
-#ifndef SOLUTIONGATEWAY_SAFT_LIST_H_
-#define SOLUTIONGATEWAY_SAFT_LIST_H_
+#ifndef _SAFT_LIST_H_
+#define _SAFT_LIST_H_
 #include<mutex>
 #include<chrono>
 #include<unistd.h>
 #include<thread>
 
 #define SAFE_LIST_ELAPSED_SECONDS	60
-//namespace snetwork_xservice_solutiongateway {
 template<typename T>
 class SafeList {
 	public:
@@ -68,10 +67,6 @@ class SafeList {
 		int Update(const T& data, bool all = false);
 		int Update(T&& data, bool all = false);
 
-#if 0
-		template<typename Predicate>
-		int Update(const T* data, bool all, Predicate p);
-#endif
 		template<typename Predicate>
 		int Update(const T& data, bool all, Predicate p);
 		template<typename Predicate>
@@ -111,7 +106,6 @@ SafeList<T>::node::node(const T& data) {
 
 template<typename T>
 SafeList<T>::node::node(T&& data) {
-	//this->data = new T(std::move(data));
 	this->data = std::move(data);
 
 	next = nullptr;
@@ -119,7 +113,6 @@ SafeList<T>::node::node(T&& data) {
 
 template<typename T>
 SafeList<T>::node::node(const node& r) {
-	//this->data = new T(r.data);
 	this->data = r.data;
 
 	next = nullptr;
@@ -139,7 +132,6 @@ typename SafeList<T>::node& SafeList<T>::node::operator=(const node& r) {
 		return *this;
 	}
 
-	//this->data = new T(r.data);
 	this->data = r.data;
 	next = nullptr;
 
@@ -152,7 +144,6 @@ typename SafeList<T>::node& SafeList<T>::node::operator=(node&& r) {
 		return *this;
 	}
 
-	//this->data = new T(std::move(r.data));
 	this->data = std::move(r.data);
 	next = nullptr;
 
@@ -161,12 +152,6 @@ typename SafeList<T>::node& SafeList<T>::node::operator=(node&& r) {
 
 template<typename T>
 SafeList<T>::node::~node() {
-#if 0
-	if (data != nullptr) {
-		delete data;
-		data = nullptr;
-	}
-#endif
 	next = nullptr;
 }
 /* node end ****/
@@ -229,7 +214,6 @@ void SafeList<T>::ForEach(Function f) {
 }
 
 template<typename T>
-//typename SafeList<T>::node* SafeList<T>::Find(const T& data) {
 T* SafeList<T>::Find(const T& data) {
 	node* curr = m_head;
 	std::unique_lock<std::mutex> lk(m_head->m_mutex);
@@ -248,47 +232,6 @@ T* SafeList<T>::Find(const T& data) {
 
 	return nullptr;
 }
-
-#if 0
-template<typename T>
-int SafeList<T>::Update(const T* data, bool all) {
-	node* curr = m_head;
-	std::unique_lock<std::mutex> lk(m_head->m_mutex);
-	node* next = nullptr;
-	int ret = 0;
-	if (all == false) {
-		while (next = curr->next) {
-			std::unique_lock<std::mutex> next_lk(next->m_mutex);
-			lk.unlock();
-			if(next->data == *data) {
-				next->data = *data;
-				++ret;
-
-				return ret;
-			} else {
-				curr = next;
-				lk=std::move(next_lk);
-			}
-		}
-	} else {
-		while (next = curr->next) {
-			std::unique_lock<std::mutex> next_lk(next->m_mutex);
-			lk.unlock();
-			if(next->data == *data) {
-				next->data = *data;
-				++ret;
-				curr = next;
-				lk=std::move(next_lk);
-			} else {
-				curr = next;
-				lk=std::move(next_lk);
-			}
-		}
-	}
-
-	return ret;
-}
-#endif
 
 template<typename T>
 int SafeList<T>::Update(const T& data, bool all) {
@@ -454,32 +397,6 @@ int SafeList<T>::Update(T&& data, bool all, Predicate p) {
 	return ret;
 }
 
-#if 0
-template<typename T>
-template<typename Predicate>
-void SafeList<T>::Remove(Predicate p) {
-	node* curr = m_head;
-	node* dst = nullptr;
-	std::unique_lock<std::mutex> lk(m_head->m_mutex);
-	node* next = nullptr;
-	while (next = curr->next) {
-		std::unique_lock<std::mutex> next_lk(next->m_mutex);
-		if(p(next->data)) {
-			dst = next;
-			curr->next = curr->next->next;
-			--m_len;
-
-			break;
-		} else {
-			curr = next;
-			lk=std::move(next_lk);
-		}
-	}
-
-	delete dst;
-	dst = nullptr;
-}
-#endif
 template<typename T>
 template<typename Predicate>
 void SafeList<T>::RemoveAll(Predicate p) {
@@ -566,7 +483,4 @@ void SafeList<T>::Run(Predicate p) {
 	};
 }
 /*  list end *****/
-
-//}
-
 #endif
